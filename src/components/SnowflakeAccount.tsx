@@ -17,7 +17,7 @@ function SnowflakeAccount() {
 interface CardProps {
   title: string;
   text: string;
-  alt: boolean;
+  alt?: boolean;
 }
 
 function Card({ title, text, alt }: CardProps) {

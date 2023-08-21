@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./App.css";
 import GettingStarted from "./getting-started.mdx";
 import VideoPlayer from "./VideoPlayer";

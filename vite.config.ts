@@ -14,6 +14,8 @@ const options = {
 };
 
 // https://vitejs.dev/config/
+
 export default defineConfig({
+  // @ts-ignore
   plugins: [mdx(options), react()],
 });
