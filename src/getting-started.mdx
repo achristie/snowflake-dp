@@ -1,0 +1,108 @@
+import SnowflakeAccount from "./components/SnowflakeAccount";
+import Layout from "./components/Layout";
+import Mark from "./components/Mark";
+
+<Layout>
+# Getting Started
+
+## Account Types
+
+There are two ways of accessing data via Snowflake
+
+<SnowflakeAccount />
+
+Contact our Commercial team to learn more!
+
+## Simple Query
+
+After you have access - sign in and execute this simple query against the <Mark>Market Data</Mark> database.
+
+```sql
+SELECT symbol,
+       description,
+       commodity,
+       *
+FROM   ref_data_marketdata
+LIMIT  100;
+```
+
+| Symbol  | Description                                                                      | Commodity   |
+| ------- | -------------------------------------------------------------------------------- | ----------- |
+| EECMG24 | AEP-Dayton M2MS Pk Jul 2024                                                      | Electricity |
+| AI01267 | AISI Alloy Line Pipe Steel Conv&Proc Pipe And Tubes US Shipmts Qtly              | Steel       |
+| AI02985 | AISI Crbn Cold Finished Bars Automotive Vehicles Parts&Acc-Assem US Shipmts Qtly | Steel       |
+| AI03312 | AISI Crbn Hot Rolled Sheets Mach Ind Eqp&Tools Metal Working Eqt US Shipmts Qtly | Steel       |
+| NADME27 | Agua Dulce M2MS Fwd May 2027                                                     | Natural gas |
+
+_(sample output... more columns and rows)_
+
+## Pricing Data
+
+The <Mark>Market Data</Mark> database also includes Pricing data for each symbol:
+
+```sql
+SELECT *
+FROM   pricedata
+WHERE  symbol IN ( 'PCAAS00', 'PCAAT00' )
+       AND bate = 'c'
+       AND assessdate >= '2015-01-01'
+ORDER  BY assessdate ASC
+LIMIT  100;
+```
+
+| Symbol  | MDC                | DESCRIPTION              | ASSESSDATE              | MODIFIEDDATETIME        | BATE | VALUE | ISCORRECTED | UOM | CURRENCY |
+| ------- | ------------------ | ------------------------ | ----------------------- | ----------------------- | ---- | ----- | ----------- | --- | -------- |
+| PCAAT00 | CRD,CRO,CRU,RP     | Dubai Mo01 (NextGen MOC) | 2015-01-02 00:00:00.000 | 2015-01-02 07:01:36.000 | c    | 54.09 | N           | BBL | USD      |
+| PCAAS00 | AFM,CRD,CRO,CRU,RI | Dated Brent              | 2015-01-02 00:00:00.000 | 2015-01-02 14:25:56.000 | c    | 54.98 | N           | BBL | USD      |
+| PCAAS00 | AFM,CRD,CRO,CRU,RI | Dated Brent              | 2015-01-05 00:00:00.000 | 2015-01-05 18:07:38.000 | c    | 51.3  | N           | BBL | USD      |
+| PCAAT00 | CRD,CRO,CRU,RP     | Dubai Mo01 (NextGen MOC) | 2015-01-05 00:00:00.000 | 2015-01-05 11:14:41.000 | c    | 51.4  | N           | BBL | USD      |
+
+Snowflake provides a SQL interface on top of the data so you can do any adhoc analysis you'd like.
+For example, below we are looking at the <Mark>Max</Mark> and <Mark>Min</Mark> monthly price for certain <Mark>Crude oil</Mark> symbols:
+
+```sql
+SELECT r.symbol,
+       Max(r.description)              AS description,
+       Date_trunc('MONTH', assessdate) AS month,
+       Max(p.value)                    AS max_value,
+       Min(p.value)                    AS min_value,
+       Max(r.api_gravity)              AS api_gravity,
+       Max(r.delivery_region_basis)    AS delivery_region_basis,
+       Max(r.uom)                      AS UOM,
+       Max(r.currency)                 AS currency
+FROM   ref_data_marketdata r
+       LEFT JOIN pricedata p
+              ON p.symbol = r.symbol
+WHERE  r.commodity = 'Crude oil'
+       AND bate = 'c'
+       AND r.assessment_frequency = 'Daily (weekday)'
+       AND p.assessdate BETWEEN '2023-01-01' AND '2023-07-31'
+GROUP  BY r.symbol,
+          month
+ORDER  BY month ASC,
+          symbol ASC;
+```
+
+## Dictionary
+
+Each database includes a dictionary view as shown below:
+
+```sql
+SELECT * FROM marketdata_referencedata
+LIMIT 10;
+```
+
+| COLUMN_NAME | DEFINITION                                                                                      | VIEW_NAME | DESCRIPTION_EXAMPLE |
+| ----------- | ----------------------------------------------------------------------------------------------- | --------- | ------------------- |
+| SYMBOL      | A Platts 7-character unique identifier that corresponds to a Market Data price value            | PRICEDATA | PCAAS00             |
+| MDC         | Platts Market Data categories in which the symbol is published                                  | PRICEDATA | RI                  |
+| DESCRIPTION | Description of the Symbol                                                                       | PRICEDATA | Dated Brent         |
+| ASSESSDATE  | Date & Time (yyyy-MM-dd hh-mm-ss) of when the current price of the symbol and bate was assessed | PRICEDATA | 2021-04-07T00:00:00 |
+| MODDATE     | Timestamp of when the Assessment has been published or modified                                 | PRICEDATA | 2021-04-07T08:34:18 |
+| BATE        | Data item for a particular Symbol                                                               | PRICEDATA | c                   |
+| VALUE       | Current assessed price of the symbol and bate                                                   | PRICEDATA | 62.27               |
+| ISCORRECTED | Flag denoting if the price has been corrected. “Y” denotes it was corrected                     | PRICEDATA | N                   |
+| UOM         | Code identifying the unit of measure for the numerical data Common Conversion Factor            | PRICEDATA | BBL                 |
+| CURRENCY    | Three letter code representing the currency of the commodity referenced                         | PRICEDATA | USD                 |
+
+</Layout>
