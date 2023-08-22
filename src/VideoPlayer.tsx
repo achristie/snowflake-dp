@@ -18,7 +18,7 @@ const VIDEOS = [
 function VideoPlayer() {
   const [active, setActive] = useState<string>("Getting Started");
   return (
-    <div className="flex flex-row h-80 lg:h-96 justify-center">
+    <div className="flex flex-row h-96 lg:h-[450px] justify-center">
       <div className="flex aspect-video">
         <VideoContainer url={VIDEOS.filter((v) => v.name === active)[0].url} />
       </div>
