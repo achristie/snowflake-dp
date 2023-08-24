@@ -1,10 +1,4 @@
-import {
-  Dispatch,
-  MouseEventHandler,
-  ReactNode,
-  SetStateAction,
-  useState,
-} from "react";
+import { Dispatch, MouseEventHandler, ReactNode, SetStateAction } from "react";
 import ReactPlayer from "react-player/youtube";
 
 const VIDEOS = [
