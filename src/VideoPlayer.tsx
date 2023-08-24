@@ -15,18 +15,23 @@ const VIDEOS = [
   { name: "With Streamlit", url: "https://youtu.be/ivW9gDTfMWY" },
 ];
 
-function VideoPlayer() {
-  const [active, setActive] = useState<string>("Getting Started");
+interface VideoPlayerProps {
+  page: string;
+  setPage: Dispatch<SetStateAction<string>>;
+}
+
+function VideoPlayer({ page, setPage }: VideoPlayerProps) {
+  // const [active, setActive] = useState<string>("Getting Started");
   return (
     <div className="flex flex-row h-96 lg:h-[450px] justify-center">
       <div className="flex aspect-video">
-        <VideoContainer url={VIDEOS.filter((v) => v.name === active)[0].url} />
+        <VideoContainer url={VIDEOS.filter((v) => v.name === page)[0].url} />
       </div>
       <div className="w-48 bg-zinc-900 rounded-e-md ">
         <Nav
           videos={VIDEOS.map((v) => v.name)}
-          handleClick={setActive}
-          active={active}
+          handleClick={setPage}
+          active={page}
         />
       </div>
     </div>

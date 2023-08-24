@@ -1,0 +1,131 @@
+import SnowflakeAccount from "../components/SnowflakeAccount";
+import Layout from "../components/Layout";
+import Mark from "../components/Mark";
+
+<Layout>
+# Using Python
+Snowflake has a <Mark>Python</Mark> connector so it is easy to use 
+libraries like <Mark>Pandas</Mark> and <Mark>Seaborn</Mark> to do data analysis
+
+## Installation
+
+```bash
+pip install "snowflake-connector-python[pandas]"
+```
+
+## Connecting
+
+The first step is to connect to snowflake.
+Many of the below parameters are easily found in the Snowflake UI, so start there if you are unsure.
+
+```python
+  import snowflake.connector
+
+  con = snowflake.connector.connect(
+    user = 'xyz',
+    password = 'xyz',
+    account = 'xyz' # reader account see below
+    role = 'xyz'
+    warehouse = 'xyz',
+    database = 'xyz',
+    schema= 'xyz'
+  )
+```
+
+for <Mark>Reader Accounts</Mark> you will be connecting to SPGCI's snowflake instance
+
+- account: **spglobalcloudshare-ciprd**
+- role:
+- warehouse: internal_users
+- database:
+- schema:
+
+## Executing a Query
+
+```python
+  cursor = con.cursor()
+  query = f"""
+    SELECT * from forwardcurves_marketdata
+    WHERE curve_code IN ('CN06J', 'CN06I')
+    AND bate = 'c'
+    AND derivative_maturity_frequency = 'Month'
+    AND assessdate = '2021-02-09'
+  """
+  cursor.execute(query)
+  df = cursor.fetch_pandas_all()
+  df.head()
+```
+
+| assessdate | curve_code |                       curve_name | derivative_position | contract_label |    value |
+| ---------: | ---------: | -------------------------------: | ------------------: | -------------: | -------: |
+| 2021-02-09 |      CN06I | LNG FOB USGC Cargo Financial Rel |                  17 |       JUL 2022 | 5.173000 |
+| 2021-02-09 |      CN06I | LNG FOB USGC Cargo Financial Rel |                  28 |       JUN 2023 | 4.706000 |
+| 2021-02-09 |      CN06I | LNG FOB USGC Cargo Financial Rel |                   3 |       MAY 2021 | 4.714000 |
+| 2021-02-09 |      CN06I | LNG FOB USGC Cargo Financial Rel |                   9 |       NOV 2021 | 6.221000 |
+| 2021-02-09 |      CN06I | LNG FOB USGC Cargo Financial Rel |                   4 |       JUN 2021 | 4.796000 |
+
+_(sample output... more columns and rows)_
+
+This is the general pattern. You can change the query as you see fit.
+
+## Data Analysis
+
+The primary reason to pull the data into python is so you can do further analysis or visualization of the data.
+
+Like a pivot table:
+
+```python
+df['contract_label'] = pd.to_datetime(df['contract_label']).dt.to_period("M")
+pt = df.pivot_table(index=['contract_label'], values='value', columns=['curve_code', 'curve_name'])
+pt
+```
+
+| curve_code     | CN06I                            | CN06J                         |
+| -------------- | -------------------------------- | ----------------------------- |
+| curve_name     | LNG FOB USGC Cargo Financial Rel | LNG Japan/Korea Financial Rel |
+| contract_label |                                  |                               |
+| 2021-02        | NaN                              | 8.375                         |
+| 2021-03        | 5.072                            | 6.625                         |
+| 2021-04        | 4.816                            | 6.525                         |
+| 2021-05        | 4.714                            | 6.700                         |
+| 2021-06        | 4.796                            | 6.890                         |
+| ...            | ...                              | ...                           |
+| 2026-10        | NaN                              | 5.800                         |
+| 2026-11        | NaN                              | 5.830                         |
+| 2026-12        | NaN                              | 5.820                         |
+| 2027-01        | NaN                              | 5.680                         |
+| 2027-02        | NaN                              | 5.540                         |
+
+_(sample output)_
+
+or a chart:
+
+```python
+  pt.plot()
+```
+
+<img src="output.png" />
+
+## Dictionary
+
+To see the definition of each field:
+
+```sql
+SELECT * FROM forwardcurves_referencedata
+LIMIT 10;
+```
+
+| COLUMN_NAME                  | DEFINITION                                                                                                                                                                                                                                                                | VIEW_NAME                | DESCRIPTION_EXAMPLE                    |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------- |
+| Symbol                       | A Commodity Insights created alphanumeric identifier for a specific forward curve contract for the purpose of identification and differentiation in various business transactions and systems.                                                                            | FORWARDCURVES_MARKETDATA | PCAAS00                                |
+| Bate                         | A single letter code indicating the type of price or statistic being reported. One Symbol Code can have multiple bate codes.                                                                                                                                              | FORWARDCURVES_MARKETDATA | c                                      |
+| Contract Label               | Forward curve contract categorization based on their pricing structure and relationship to the underlying asset or market. It identifies whether the contract is an absolute forward curve contract (i.e. Dec 2023), or a relative forward curve contract (i.e. Month 5). | FORWARDCURVES_MARKETDATA | JAN 2022                               |
+| Assess Date                  | Specific date on which an assessment or evaluation of a forward curve is conducted.                                                                                                                                                                                       | FORWARDCURVES_MARKETDATA | 2021-04-07T00:00:00                    |
+| Contract Value               | Monetary worth or financial value associated with a forward curve contract. It represents the estimated or agreed-upon value of the contract, which is derived from the anticipated future prices of the underlying asset as reflected in the forward curve.              | FORWARDCURVES_MARKETDATA | 62.27                                  |
+| Curve Code                   | Unique identifier in an alphanumeric representation assigned to a specific forward curve (Curve Name) in order to identify and reference a particular forward curve within a system.                                                                                      | FORWARDCURVES_MARKETDATA | CN002                                  |
+| Curve Name                   | Descriptive title or label assigned to a specific forward curve used to provide a recognizable and meaningful name that represents the underlying asset or market for which the forward curve is derived.                                                                 | FORWARDCURVES_MARKETDATA | Brent Frontline Financial              |
+| Contract Period              | Specific time period covered by a forward curve contract, indicating the length of time over which the contract's pricing and delivery terms are established (i.e. Month, Quarter, Season, Year, Gas Year).                                                               | FORWARDCURVES_MARKETDATA | Month, Quarter, Season, Year, Gas Year |
+| Contract Derivative Position | The specific position of the relative forward curve contract associated to the Contract Period (i.e. Month 1, Month 12, Quarter 3, Year 2).                                                                                                                               | FORWARDCURVES_MARKETDATA | 1                                      |
+| Contract Roll Date           | Specific date on which market participants transition from one contract expiration or delivery period to another within the forward curve.                                                                                                                                | FORWARDCURVES_MARKETDATA | 2025-11-03 00:00:00                    |
+
+</Layout>
