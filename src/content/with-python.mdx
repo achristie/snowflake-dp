@@ -42,7 +42,7 @@ for <Mark>Reader Accounts</Mark> you will be connecting to SPGCI's snowflake ins
 
 ## Executing a Query
 
-```python
+```python /query/#v
   cursor = con.cursor()
   query = f"""
     SELECT * from forwardcurves_marketdata
@@ -66,7 +66,7 @@ for <Mark>Reader Accounts</Mark> you will be connecting to SPGCI's snowflake ins
 
 _(sample output... more columns and rows)_
 
-This is the general pattern. You can change the query as you see fit.
+This is the general pattern. You can change the <Mark>query</Mark> as you see fit.
 
 ## Data Analysis
 
@@ -75,8 +75,10 @@ The primary reason to pull the data into python is so you can do further analysi
 Like a pivot table:
 
 ```python
-df['contract_label'] = pd.to_datetime(df['contract_label']).dt.to_period("M")
-pt = df.pivot_table(index=['contract_label'], values='value', columns=['curve_code', 'curve_name'])
+df["contract_label"] = pd.to_datetime(df["contract_label"]).dt.to_period("M")
+pt = df.pivot_table(
+    index=["contract_label"], values="value", columns=["curve_code", "curve_name"]
+)
 pt
 ```
 

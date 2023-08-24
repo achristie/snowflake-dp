@@ -13,3 +13,18 @@ mark {
   margin-bottom: 0.15rem;
   @apply bg-red-400 text-white;
 }
+
+[data-chars-id="v"] {
+  --tw-border-opacity: 1;
+  font-weight: 700;
+  --tw-text-opacity: 1 !important;
+  border-bottom-color: rgb(219 39 119 / var(--tw-border-opacity));
+  background-color: #9f123980;
+  color: rgb(249 168 212 / var(--tw-text-opacity)) !important;
+  border-bottom-width: 2px;
+  padding: 0.25rem;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
