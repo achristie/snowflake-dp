@@ -14,10 +14,7 @@ function App() {
       <div>
         <VideoPlayer page={page} setPage={setPage} />
       </div>
-      <div>
-        {renderPage(page)}
-        {/* <GettingStarted /> */}
-      </div>
+      <div>{renderPage(page)}</div>
     </div>
   );
 }
