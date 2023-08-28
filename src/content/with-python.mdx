@@ -19,17 +19,17 @@ The first step is to connect to snowflake.
 Many of the below parameters are easily found in the Snowflake UI, so start there if you are unsure.
 
 ```python
-  import snowflake.connector
+import snowflake.connector
 
-  con = snowflake.connector.connect(
-    user = 'xyz',
-    password = 'xyz',
-    account = 'xyz' # reader account see below
-    role = 'xyz'
-    warehouse = 'xyz',
-    database = 'xyz',
-    schema= 'xyz'
-  )
+con = snowflake.connector.connect(
+  user = 'xyz',
+  password = 'xyz',
+  account = 'xyz', # reader account see below
+  role = 'xyz',
+  warehouse = 'xyz',
+  database = 'xyz',
+  schema= 'xyz'
+)
 ```
 
 for <Mark>Reader Accounts</Mark> you will be connecting to SPGCI's snowflake instance
@@ -43,17 +43,17 @@ for <Mark>Reader Accounts</Mark> you will be connecting to SPGCI's snowflake ins
 ## Executing a Query
 
 ```python /query/#v
-  cursor = con.cursor()
-  query = f"""
-    SELECT * from forwardcurves_marketdata
-    WHERE curve_code IN ('CN06J', 'CN06I')
-    AND bate = 'c'
-    AND derivative_maturity_frequency = 'Month'
-    AND assessdate = '2021-02-09'
-  """
-  cursor.execute(query)
-  df = cursor.fetch_pandas_all()
-  df.head()
+cursor = con.cursor()
+query = f"""
+  SELECT * from forwardcurves_marketdata
+  WHERE curve_code IN ('CN06J', 'CN06I')
+  AND bate = 'c'
+  AND derivative_maturity_frequency = 'Month'
+  AND assessdate = '2021-02-09'
+"""
+cursor.execute(query)
+df = cursor.fetch_pandas_all()
+df.head()
 ```
 
 | assessdate | curve_code |                       curve_name | derivative_position | contract_label |    value |

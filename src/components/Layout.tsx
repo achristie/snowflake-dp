@@ -15,6 +15,7 @@ export default function Layout({ children }: LayoutProps) {
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 1000, opacity: 0 }}
         transition={{ type: "spring", duration: 0.3 }}
+        className="mb-12"
       >
         <article className="max-w-none prose prose-strone lg:prose-xl">
           {children}

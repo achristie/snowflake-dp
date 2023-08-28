@@ -1,0 +1,204 @@
+import SnowflakeAccount from "../components/SnowflakeAccount";
+import Layout from "../components/Layout";
+import Mark from "../components/Mark";
+
+<Layout>
+# Using Streamlit
+
+<Mark>Streamlit</Mark> is a fantastic <Mark>Python</Mark> framework for creating
+dashboards.
+
+In this example we will combine Snowflake, Streamlit and Plotly to create an interactive dashboard using the <Mark>NA Natural Gas Pipeline Flows</Mark> dataset.
+
+## Installation
+
+```bash
+pip install "snowflake-connector-python[pandas]" streamlit plotly
+```
+
+## Imports
+
+Create a file called <Mark>streamlit.py</Mark> and add the following:
+
+```python
+import streamlit as st
+import pandas as pd
+import snowflake.connector
+from datetime import date
+import plotly.express as px
+```
+
+## Connecting to Snowflake
+
+Setup your connection to snowflake
+
+```python /@st.cache_resource()/#v
+@st.cache_resource()
+def create_connection():
+    return snowflake.connector.connect(
+        user="xyz"
+        account="xyz",
+        role="xyz",
+        warehouse="xyz",
+        database="xyz",
+        schema="nagaspipelineflowsmi",
+    )
+
+cursor = create_connection().cursor()
+```
+
+the <Mark>@st.cache_resource</Mark> decorator will cache your connection so you do not have to reconnect
+every time you perform any action.
+
+test the connection to ensure it works.
+
+```bash
+streamlit run streamlit.py
+```
+
+## Creating the sidebar
+
+In this example we allow selecting a _FacilityType_, _Nomination Cycle_, _Pipeline_ and _Measurement Date_.
+
+So, to start, let's get the distinct values for those fields from Snowflake to populate the dropdowns:
+
+```python
+q_facility = f"""
+  select facilitytype from nagaspipelinereferencedata
+  group by facilitytype
+  order by facilitytype;
+"""
+cursor.execute(q_facility)
+df_facilities = cursor.fetch_pandas_all()
+
+q_pipeline = f"""
+  select pipelinename from nagaspipelinereferencedata
+  group by pipelinename
+  order by pipelinename;
+"""
+cursor.execute(q_pipeline)
+df_pipelines = cursor.fetch_pandas_all()
+```
+
+Nomination Cycle and Measurement Date do not need to be queried.
+
+Now, let's create the _Sidebar_:
+
+```python
+def submit():
+  st.write("Submitted!")
+
+with st.sidebar:
+    with st.form("selections"):
+        facility = st.selectbox("Select Facility", df_facilities, key="facility")
+        pipelines = st.multiselect(
+            "Select pipeline", df_pipelines["PIPELINENAME"], key="pipelines"
+        )
+        nom_cycles = st.multiselect(
+            "Nomination Cycle", ["I1", "I2", "I3", "E"], key="cycles"
+        )
+        dates = st.date_input(
+            "Select Gas Date",
+            (date(date.today().year, 1, 1), date.today()),
+            format="YYYY-MM-DD",
+            key="dates",
+        )
+
+        submitted = st.form_submit_button("Submit", on_click=submit)
+```
+
+Here we have created
+
+- a selectbox for _Facility Type_ populated with `df_facilities` (result of `q_facility`).
+- a multiselect for _Pipeline Name_ populated with `df_pipelines` (result of `q_pipeline`).
+- a multiselect for _Nomination Cycle_ with hard-coded nomination cycles.
+- a date picker for _Measurement Date_ defaulting to the range `Jan 1` to `Today`.
+
+Go back to your app and you should see this:
+
+<img src="streamlit-sidebar.png" />
+
+## Testing the Sidebar
+
+Let's make sure when we hit the `Submit` button we actually get the expected values.
+There are the values we will want to pass to our Snowflake query.
+
+```python
+def join(lst):
+    s = ", ".join(f"'{i}'" for i in lst)
+    return f"({s})"
+
+def submit():
+    pipelines = join(st.session_state.pipelines)
+    nom_cycles = join(st.session_state.cycles)
+    dates = st.session_state.dates
+    facility = st.session_state.facility
+    st.write(pipelines, nom_cycles, dates, facility)
+```
+
+- We have added a the `join` helper function to make it easier to use the values in a SQL query.
+- We have changed the `submit` function so it will display the selected values on the page.
+
+Select a few values and hit `Submit` and you should now see:
+
+<img src="streamlit-filters.png" />
+
+## Visualize Data
+
+Based on the selections, we now want to fetch the appropriate data and display it on the page.
+For this example we will show a line chart of each pipeline's `Scheduled Volume` over time for the selected `Facility Type` and `Nomination Cycles`
+
+Update our `submit` function to the following:
+
+```python /query/#v
+def submit():
+    pipelines = join(st.session_state.pipelines)
+    nom_cycles = join(st.session_state.cycles)
+    dates = st.session_state.dates
+    facility = st.session_state.facility
+    st.write(pipelines, nom_cycles, dates, facility)
+
+    query = f"""
+        select pipelinename, measurementdate, sum(scheduledvolume) from nagaspipelineflows
+        where facilitytype = '{facility}' and pipelinename IN {pipelines} and nominationcycle iN {nom_cycles}
+        and measurementdate between '{dates[0]}' and '{dates[1]}'
+        group by measurementdate, pipelinename
+        order by measurementdate;
+    """
+
+    cursor.execute(query)
+    df = cursor.fetch_pandas_all()
+
+    fig = px.line(
+        df, x="MEASUREMENTDATE", y="SUM(SCHEDULEDVOLUME)", color="PIPELINENAME"
+    )
+    st.plotly_chart(fig)
+```
+
+In this <Mark>query</Mark> we are filtering based on the values selected in the sidebar and getting
+the sum of `ScheduledVolume` based on the `PipelineName` and `MeasurementDate`.
+The query result will look something like this:
+
+|     | PIPELINENAME | MEASUREMENTDATE | SUM(SCHEDULEDVOLUME) |
+| --- | ------------ | --------------- | -------------------- |
+| 0   | Transco      | 2023-01-01      | 2817236.0000         |
+| 1   | Transco      | 2023-01-02      | 2839612.0000         |
+| 2   | Transco      | 2023-01-03      | 2940717.0000         |
+| 3   | Transco      | 2023-01-04      | 3033639.0000         |
+| 4   | Transco      | 2023-01-05      | 3268283.0000         |
+
+your app should now look like:
+
+<img src="streamlit-done.png" />
+
+If you change your critera and hit `Submit` you should see the chart update to reflect your new selections!
+
+## Finishing up
+
+<Mark>Streamlit</Mark> is a great way to quickly build a data powered app and with
+Snowflake you can write adhoc queries to visualize the data any way that you see
+fit.
+
+**Any questions or feedback - please let us know.**
+
+</Layout>

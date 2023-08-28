@@ -1,6 +1,7 @@
 import "./App.css";
 import GettingStarted from "./getting-started.mdx";
 import WithPython from "./content/with-python.mdx";
+import WithStreamlit from "./content/with-streamlit.mdx";
 import VideoPlayer from "./VideoPlayer";
 import Header from "./Header";
 import { useState } from "react";
@@ -25,6 +26,8 @@ function renderPage(page: string) {
       return <GettingStarted />;
     case "With Python":
       return <WithPython />;
+    case "With Streamlit":
+      return <WithStreamlit />;
   }
 
   return <GettingStarted />;

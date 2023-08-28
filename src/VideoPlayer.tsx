@@ -1,12 +1,13 @@
 import { Dispatch, MouseEventHandler, ReactNode, SetStateAction } from "react";
 import ReactPlayer from "react-player/youtube";
+import { motion } from "framer-motion";
 
 const VIDEOS = [
   { name: "Getting Started", url: "https://youtu.be/ivW9gDTfMWY" },
   { name: "With Python", url: "https://youtu.be/A61yj_ZfNYc" },
   { name: "With PowerBI", url: "https://youtu.be/ivW9gDTfMWY" },
   { name: "With Tableau", url: "https://youtu.be/ivW9gDTfMWY" },
-  { name: "With Streamlit", url: "https://youtu.be/ivW9gDTfMWY" },
+  { name: "With Streamlit", url: "https://youtu.be/v_kvxjlEWPg" },
 ];
 
 interface VideoPlayerProps {
@@ -15,7 +16,6 @@ interface VideoPlayerProps {
 }
 
 function VideoPlayer({ page, setPage }: VideoPlayerProps) {
-  // const [active, setActive] = useState<string>("Getting Started");
   return (
     <div className="flex flex-row h-96 lg:h-[450px] justify-center">
       <div className="flex aspect-video">
@@ -72,16 +72,14 @@ interface NavItemProps {
 
 function NavItem({ isActive, children, handleClick }: NavItemProps) {
   return (
-    <div
+    <motion.div
       onClick={handleClick}
-      className={`border-solid border-zinc-700 border-b-2 p-2 pl-4 hover:cursor-pointer ${
-        isActive
-          ? "text-green-300 font-semibold"
-          : "text-zinc-400 hover:bg-green-300 hover:text-white"
+      className={`border-solid border-zinc-700 border-b-2 p-2 pl-4 hover:cursor-pointer transition-colors duration-150 ${
+        isActive ? "text-green-300 font-semibold" : "text-zinc-400 "
       }`}
     >
       <li className="">{children}</li>
-    </div>
+    </motion.div>
   );
 }
 
