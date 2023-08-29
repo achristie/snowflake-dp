@@ -1,32 +1,46 @@
-import { Dispatch, MouseEventHandler, ReactNode, SetStateAction } from "react";
+import { ReactNode } from "react";
 import ReactPlayer from "react-player/youtube";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const VIDEOS = [
-  { name: "Getting Started", url: "https://youtu.be/ivW9gDTfMWY" },
-  { name: "With Python", url: "https://youtu.be/A61yj_ZfNYc" },
-  { name: "With PowerBI", url: "https://youtu.be/ivW9gDTfMWY" },
-  { name: "With Tableau", url: "https://youtu.be/ivW9gDTfMWY" },
-  { name: "With Streamlit", url: "https://youtu.be/v_kvxjlEWPg" },
+  {
+    name: "Getting Started",
+    url: "https://youtu.be/ivW9gDTfMWY",
+    post: "getting-started",
+  },
+  { name: "With Python", url: "https://youtu.be/A61yj_ZfNYc", post: "python" },
+  {
+    name: "With PowerBI",
+    url: "https://youtu.be/ivW9gDTfMWY",
+    post: "powerbi",
+  },
+  {
+    name: "With Tableau",
+    url: "https://youtu.be/ivW9gDTfMWY",
+    post: "tableau",
+  },
+  {
+    name: "With Streamlit",
+    url: "https://youtu.be/v_kvxjlEWPg",
+    post: "streamlit",
+  },
 ];
 
 interface VideoPlayerProps {
-  page: string;
-  setPage: Dispatch<SetStateAction<string>>;
+  post: string;
 }
 
-function VideoPlayer({ page, setPage }: VideoPlayerProps) {
+function VideoPlayer({ post }: VideoPlayerProps) {
+  let video = VIDEOS.filter((v) => v.post == post)[0];
+
   return (
     <div className="flex flex-row h-96 lg:h-[450px] justify-center">
       <div className="flex aspect-video">
-        <VideoContainer url={VIDEOS.filter((v) => v.name === page)[0].url} />
+        <VideoContainer url={video.url} />
       </div>
       <div className="w-48 bg-zinc-900 rounded-e-md ">
-        <Nav
-          videos={VIDEOS.map((v) => v.name)}
-          handleClick={setPage}
-          active={page}
-        />
+        <Nav post={post} />
       </div>
     </div>
   );
@@ -41,22 +55,21 @@ function VideoContainer({ url }: VideoContainerProps) {
 }
 
 interface NavProps {
-  videos: string[];
-  active: string;
-  handleClick: Dispatch<SetStateAction<string>>;
+  post: string;
 }
 
-function Nav({ videos, handleClick, active }: NavProps) {
+function Nav({ post }: NavProps) {
   return (
     <ul className="text-xl flex flex-col h-full justify-center">
-      {videos.map((item) => {
+      {VIDEOS.map((item) => {
         return (
           <NavItem
-            isActive={active === item}
-            key={item}
-            handleClick={() => handleClick(item)}
+            video={item}
+            post={post}
+            isActive={item.post == post}
+            key={item.name}
           >
-            {item}
+            {item.name}
           </NavItem>
         );
       })}
@@ -65,21 +78,23 @@ function Nav({ videos, handleClick, active }: NavProps) {
 }
 
 interface NavItemProps {
+  video: { name: string; url: string; post: string };
   children: ReactNode;
   isActive: boolean;
-  handleClick: MouseEventHandler;
+  post: string;
 }
 
-function NavItem({ isActive, children, handleClick }: NavItemProps) {
+function NavItem({ video, children, isActive }: NavItemProps) {
   return (
-    <motion.div
-      onClick={handleClick}
-      className={`border-solid border-zinc-700 border-b-2 p-2 pl-4 hover:cursor-pointer transition-colors duration-150 ${
-        isActive ? "text-green-300 font-semibold" : "text-zinc-400 "
-      }`}
-    >
-      <li className="">{children}</li>
-    </motion.div>
+    <Link to={video.post}>
+      <motion.div
+        className={`border-solid border-zinc-700 border-b-2 p-2 pl-4 hover:cursor-pointer transition-colors duration-150 ${
+          isActive ? "text-green-300 font-semibold" : "text-zinc-400 "
+        }`}
+      >
+        <li>{children}</li>
+      </motion.div>
+    </Link>
   );
 }
 

@@ -1,36 +1,28 @@
 import "./App.css";
-import GettingStarted from "./getting-started.mdx";
-import WithPython from "./content/with-python.mdx";
-import WithStreamlit from "./content/with-streamlit.mdx";
 import VideoPlayer from "./VideoPlayer";
 import Header from "./Header";
-import { useState } from "react";
+import { Outlet, useParams } from "react-router-dom";
+
+interface PostParams {
+  post: string;
+}
 
 function App() {
-  const [page, setPage] = useState("Getting Started");
+  let { post } = useParams<keyof PostParams>() as PostParams;
+
+  post = post ?? "getting-started";
 
   return (
     <div className="container mx-auto flex flex-col gap-y-8 j">
       <Header />
       <div>
-        <VideoPlayer page={page} setPage={setPage} />
+        <VideoPlayer post={post} />
       </div>
-      <div>{renderPage(page)}</div>
+      <div>
+        <Outlet />
+      </div>
     </div>
   );
-}
-
-function renderPage(page: string) {
-  switch (page) {
-    case "Getting Started":
-      return <GettingStarted />;
-    case "With Python":
-      return <WithPython />;
-    case "With Streamlit":
-      return <WithStreamlit />;
-  }
-
-  return <GettingStarted />;
 }
 
 export default App;
